@@ -1,3 +1,4 @@
+import os
 import sys
 import math
 import time
@@ -7,7 +8,15 @@ import matplotlib.pyplot as plt
 from src.agents import *
 from src.bandits import *
 
-
+nits = 30
+fnames = []
+epsilons = []
+for epsilon in [0.01, 0.20, 0.40, 0.60, 0.80, 1.0]: 
+	fname = str(epsilon).split('.')
+	fnames += [fname[0] + fname[1]]*nits
+	epsilons += [epsilon]*nits
+	
+	
 def true_central(a, b, n): 
 	if n == 2: 
 		return a*pow(b, 2)/(pow(a - 1, 2)*(a - 2))
@@ -29,7 +38,14 @@ def vcentral(a, b, n):
 	
 	return vcent.real
 
-epsilon = round(float(sys.argv[1]), 2)
+
+# get arguments from command line
+s = sys.argv[0].split('.')[0]
+i = int(sys.argv[1])
+
+# get the epsilon value
+fname = fnames[i]
+epsilon = epsilons[i]
 
 # parameters of pareto distribution
 b = 1
@@ -46,27 +62,9 @@ vraw = a/(a - (1 + epsilon))
 vucb = vcentral(a = 2.01, b = 1, n = 2)
 vcent = vcentral(a, b, 1 + epsilon)
 
-print(vraw, vcent)
+agent = MoMUCB(k, vcent, epsilon)
+agent, output = run(n, agent, bandit)
 
-agents = [UCB1(k, n, v = vucb),
-	      MoMUCB(k, vcent, epsilon),
-		  CatoniUCB(k, n, vcent, epsilon),
-		  TruncatedUCB(k, vraw, epsilon)]
-		   
-for agent in agents:
-    results = [] 
-    start = time.time()
-    for _ in range(1): 
-        agent.reset()
-        agent, output = run(n, agent, bandit)
-        results.append(output)
-        
-    finish = time.time()
-    print(f'{agent.name()} Runtime: ', finish - start)
-    plt.plot(range(n + 1), np.mean(results, axis = 0), label = agent.name())
-    plt.legend()
-    if epsilon < 1: 
-    	plt.savefig('ParetoFM.png')
-    else: 
-    	plt.savefig('ParetoFV.png')
-
+cwd = os.getcwd()
+filename = cwd + f'/out/{s}_eps{fname}_it{i%30}.npy'
+np.save(filename, output)
