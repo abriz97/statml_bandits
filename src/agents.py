@@ -100,7 +100,7 @@ class UCB1(OFU):
         mu = np.mean(self.rewards[action])
 
         # compute the exploration bonus
-        bonus = np.sqrt(2)*np.sqrt(np.log(1/self.delta)/n)
+        bonus = np.sqrt(2*self.v)*np.sqrt(np.log(1/self.delta)/n)
 
         return mu + bonus
         
@@ -161,8 +161,8 @@ class MoMUCB(OFU):
 
         Input:
             k (int): size of the action set 
-            v (float): bound on (1 + epsilon)-th raw moment
-            epsilon (float, (0, 1]): existing raw moments of distribution 
+            v (float): bound on (1 + epsilon)-th centered moment
+            epsilon (float, (0, 1]): existing raw centered moments 
         '''
         super().__init__(k)
         self.reset()
@@ -215,8 +215,8 @@ class CatoniUCB(OFU):
         Input:
             k (int): size of the action set 
             n (int): total number of decisions
-            v (float): bound on (1 + epsilon)-th raw moment
-            epsilon (float, (0, 1]): existing raw moments of distribution 
+            v (float): bound on (1 + epsilon)-th centered moment
+            epsilon (float, (0, 1]): existing centered moments
         '''
         super().__init__(k)
         self.reset()
