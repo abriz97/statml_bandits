@@ -8,4 +8,4 @@ module load anaconda3/personal
 source activate/delayedglb
 cd $PBS_O_WORKDIR
 
-python catoni_pareto.py $i
+python catoni_studentt.py $i
