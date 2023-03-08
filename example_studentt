@@ -1,0 +1,56 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.special import gamma
+from scipy.stats import t as studentt
+
+from agents import *
+from bandits import *
+
+
+def run(n, agent, bandit):
+    regret = 0 # tracks cumulative regret
+    output = [regret] # stores cumulative regrets
+
+    for t in range(1, n + 1): 
+        action = agent.policy(t)
+        reward = bandit.pull(action)
+        agent.update(action, reward)
+
+        # update and store the cumulative regret
+        regret += bandit.regret(action)
+        output.append(regret)
+
+    return agent, output
+
+def even_central_moment_studentt(df, power):
+    return 1/(np.sqrt(np.pi) * gamma(df/2)) * (gamma((power+1)/2) * gamma((df-power)/2) * df**(power/2))
+
+k = 2
+n = 1000
+loc = [0.0, 2.0]
+epsilon = 0.4
+df = epsilon + 1.05
+
+
+bandit = Studentt(df = df, loc = loc)
+vucb = even_central_moment_studentt(df = 2.01, power = 2)
+vcent = even_central_moment_studentt(df, 1 + epsilon)
+
+agents = [UCB1(k, n, v = vucb),
+          TruncatedUCB(k, v = vcent, epsilon = epsilon),
+          MoMUCB(k, v = vcent, epsilon = epsilon),
+          CatoniUCB(k, n, v = vcent, epsilon = epsilon)]
+
+for agent in agents:
+    results = []
+    for _ in range(1):
+        agent.reset()
+        agent, output = run(n, agent, bandit)
+        results.append(output)
+    plt.plot(range(n + 1), np.mean(results, axis = 0), label = agent.name())
+
+
+plt.ylabel(r'Cumulative Regret ($R_t$) for Studentt')
+plt.xlabel(r'Round ($t$)')
+plt.legend()
+#plt.savefig('example.png')
